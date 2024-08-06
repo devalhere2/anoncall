@@ -1,26 +1,48 @@
 <script>
-    import { onMount } from "svelte";
-
+    import { onMount,onDestroy } from "svelte";
+    let message;
+    let socket;
+    let messagelog = [];
+    let replylog = [];
     onMount(() => {
-        const exampleSocket = new WebSocket("ws://localhost:8000/details");
+        socket = new WebSocket("ws://localhost:8000/details");
 
-        exampleSocket.onopen = (event) => {
-            console.log("WebSocket connection opened.");
-            exampleSocket.send("Here's some text that the server is urgently awaiting!");
+        socket.onopen = (event) => {
         };
 
-        exampleSocket.onmessage = (event) => {
-            console.log("Message from server:", event.data);
+        socket.onmessage = (event) => {
+            replylog = [...replylog, event.data];
         };
 
-        exampleSocket.onclose = (event) => {
-            console.log("WebSocket connection closed.");
+        socket.onclose = (event) => {
+            console.log("WS Closed:", event);
         };
 
-        exampleSocket.onerror = (error) => {
-            console.error("WebSocket error:", error);
+        socket.onerror = (error) => {
+            console.error("Error:", error);
         };
     });
+    onDestroy(()=>{
+        socket.close();
+    })
+    function sendMessage() {
+        if (socket && message) {
+            messagelog = [...messagelog, message];
+            socket.send(message);
+        }
+    }
 </script>
 
-<h1>This is websocket</h1>
+<h1>Message With Yourself</h1>
+<input
+    type="text"
+    name=""
+    id=""
+    placeholder="Enter Message"
+    bind:value={message}
+/>
+<button on:click={sendMessage}>Send</button>
+{#each messagelog as message, i}
+    <div>{messagelog[i]}</div>
+    <div>{replylog[i]}</div>
+{/each}
