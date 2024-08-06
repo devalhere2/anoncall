@@ -1,5 +1,6 @@
-from fastapi import FastAPI,HTTPException,status
+from fastapi import FastAPI,HTTPException,status,WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.websockets import WebSocketDisconnect
 from typing import Optional
 from pydantic import BaseModel
 from faker import Faker 
@@ -66,6 +67,17 @@ def join_server(details: server_credentials):
     else:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Password is incorrect")
  
+
+@app.websocket("/details")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await websocket.send_text(f"Message text was: {data}")
+    except WebSocketDisconnect:
+        print("Client disconnected")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run('main:app',port=8000,host='localhost',reload=True)
